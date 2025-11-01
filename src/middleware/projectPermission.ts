@@ -1,5 +1,4 @@
-import { Response, NextFunction } from 'express';
-import { AuthRequest } from './auth.js';
+import { Request, Response, NextFunction } from 'express';
 import { AppError } from './errorHandler.js';
 import prisma from '../config/database.js';
 
@@ -22,7 +21,7 @@ const roleHierarchy: Record<ProjectRole, number> = {
  * @param minRole 最小要求的权限级别
  */
 export const requireProjectAccess = (minRole: ProjectRole = ProjectRole.VIEWER) => {
-  return async (req: AuthRequest, _res: Response, next: NextFunction) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
     try {
       const projectId = req.params.projectId || req.params.id;
       const userId = req.user?.userId;

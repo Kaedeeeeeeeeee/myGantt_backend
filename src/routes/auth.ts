@@ -5,12 +5,12 @@ import { authenticate } from '../middleware/auth.js';
 const router = Router();
 
 // Public routes
-router.post('/google', googleAuth as any);
-router.post('/refresh', refreshToken as any);
-router.post('/logout', logout as any);
+router.post('/google', googleAuth);
+router.post('/refresh', refreshToken);
+router.post('/logout', logout);
 
 // Protected routes
-router.get('/me', authenticate, getCurrentUser as any);
+router.get('/me', authenticate, getCurrentUser);
 
 export default router;
 

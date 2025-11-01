@@ -1,10 +1,9 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { findOrCreateUser, getUserById, GoogleUserInfo } from '../services/authService.js';
 import { generateAccessToken, verifyRefreshToken } from '../utils/jwt.js';
 import { AppError } from '../middleware/errorHandler.js';
-import { AuthRequest } from '../middleware/auth.js';
 
-export const googleAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const googleAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { idToken } = req.body;
 
@@ -43,7 +42,7 @@ export const googleAuth = async (req: AuthRequest, res: Response, next: NextFunc
   }
 };
 
-export const refreshToken = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { refreshToken } = req.body;
 
@@ -68,7 +67,7 @@ export const refreshToken = async (req: AuthRequest, res: Response, next: NextFu
   }
 };
 
-export const logout = async (_req: AuthRequest, res: Response) => {
+export const logout = async (_req: Request, res: Response) => {
   // In a production app, you might want to blacklist the token
   // For now, we'll just return success
   res.json({
@@ -77,7 +76,7 @@ export const logout = async (_req: AuthRequest, res: Response) => {
   });
 };
 
-export const getCurrentUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
       throw new AppError('User not authenticated', 401);

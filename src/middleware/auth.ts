@@ -1,15 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyAccessToken, TokenPayload } from '../utils/jwt.js';
+import { verifyAccessToken } from '../utils/jwt.js';
 import { AppError } from './errorHandler.js';
-import { ProjectRole } from './projectPermission.js';
-
-export interface AuthRequest extends Request {
-  user?: TokenPayload;
-  projectRole?: ProjectRole;
-}
 
 export const authenticate = async (
-  req: AuthRequest,
+  req: Request,
   _res: Response,
   next: NextFunction
 ) => {

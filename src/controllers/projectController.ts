@@ -1,5 +1,4 @@
-import { Response, NextFunction } from 'express';
-import { AuthRequest } from '../middleware/auth.js';
+import { Request, Response, NextFunction } from 'express';
 import {
   getProjectsByUserId,
   getProjectById,
@@ -10,7 +9,7 @@ import {
 } from '../services/projectService.js';
 import { AppError } from '../middleware/errorHandler.js';
 
-export const getAllProjects = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getAllProjects = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
       throw new AppError('User not authenticated', 401);
@@ -27,7 +26,7 @@ export const getAllProjects = async (req: AuthRequest, res: Response, next: Next
   }
 };
 
-export const getProject = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getProject = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
       throw new AppError('User not authenticated', 401);
@@ -44,7 +43,7 @@ export const getProject = async (req: AuthRequest, res: Response, next: NextFunc
   }
 };
 
-export const createProjectHandler = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createProjectHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
       throw new AppError('User not authenticated', 401);
@@ -67,7 +66,7 @@ export const createProjectHandler = async (req: AuthRequest, res: Response, next
   }
 };
 
-export const updateProjectHandler = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updateProjectHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
       throw new AppError('User not authenticated', 401);
@@ -95,7 +94,7 @@ export const updateProjectHandler = async (req: AuthRequest, res: Response, next
   }
 };
 
-export const deleteProjectHandler = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const deleteProjectHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
       throw new AppError('User not authenticated', 401);

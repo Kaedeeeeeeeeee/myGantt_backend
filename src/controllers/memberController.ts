@@ -1,5 +1,4 @@
-import { Response, NextFunction } from 'express';
-import { AuthRequest } from '../middleware/auth.js';
+import { Request, Response, NextFunction } from 'express';
 import {
   getProjectMembers,
   updateMemberRole,
@@ -14,7 +13,7 @@ import { AppError } from '../middleware/errorHandler.js';
  * GET /api/projects/:projectId/members
  */
 export const getProjectMembersHandler = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -40,7 +39,7 @@ export const getProjectMembersHandler = async (
  * PUT /api/projects/:projectId/members/:userId
  */
 export const updateMemberRoleHandler = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -86,7 +85,7 @@ export const updateMemberRoleHandler = async (
  * DELETE /api/projects/:projectId/members/:userId
  */
 export const removeMemberHandler = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {

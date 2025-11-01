@@ -1,5 +1,4 @@
-import { Response, NextFunction } from 'express';
-import { AuthRequest } from '../middleware/auth.js';
+import { Request, Response, NextFunction } from 'express';
 import {
   createInvitation,
   acceptInvitation,
@@ -17,7 +16,7 @@ import { AppError } from '../middleware/errorHandler.js';
  * POST /api/projects/:projectId/invitations
  */
 export const createInvitationHandler = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -64,7 +63,7 @@ export const createInvitationHandler = async (
  * GET /api/invitations/:token
  */
 export const getInvitationHandler = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -86,7 +85,7 @@ export const getInvitationHandler = async (
  * POST /api/invitations/:token/accept
  */
 export const acceptInvitationHandler = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -113,7 +112,7 @@ export const acceptInvitationHandler = async (
  * POST /api/invitations/:token/reject
  */
 export const rejectInvitationHandler = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -140,7 +139,7 @@ export const rejectInvitationHandler = async (
  * DELETE /api/invitations/:id
  */
 export const cancelInvitationHandler = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -167,7 +166,7 @@ export const cancelInvitationHandler = async (
  * GET /api/projects/:projectId/invitations
  */
 export const getProjectInvitationsHandler = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -193,7 +192,7 @@ export const getProjectInvitationsHandler = async (
  * GET /api/invitations/pending
  */
 export const getUserPendingInvitationsHandler = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {

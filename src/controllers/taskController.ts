@@ -1,5 +1,4 @@
-import { Response, NextFunction } from 'express';
-import { AuthRequest } from '../middleware/auth.js';
+import { Request, Response, NextFunction } from 'express';
 import {
   getTasksByProjectId,
   getTaskById,
@@ -11,7 +10,7 @@ import {
 } from '../services/taskService.js';
 import { AppError } from '../middleware/errorHandler.js';
 
-export const getTasks = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getTasks = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
       throw new AppError('User not authenticated', 401);
@@ -28,7 +27,7 @@ export const getTasks = async (req: AuthRequest, res: Response, next: NextFuncti
   }
 };
 
-export const getTask = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getTask = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
       throw new AppError('User not authenticated', 401);
@@ -45,7 +44,7 @@ export const getTask = async (req: AuthRequest, res: Response, next: NextFunctio
   }
 };
 
-export const createTaskHandler = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createTaskHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
       throw new AppError('User not authenticated', 401);
@@ -103,7 +102,7 @@ export const createTaskHandler = async (req: AuthRequest, res: Response, next: N
   }
 };
 
-export const updateTaskHandler = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updateTaskHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
       throw new AppError('User not authenticated', 401);
@@ -182,7 +181,7 @@ export const updateTaskHandler = async (req: AuthRequest, res: Response, next: N
   }
 };
 
-export const deleteTaskHandler = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const deleteTaskHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
       throw new AppError('User not authenticated', 401);
