@@ -13,16 +13,28 @@ export class AppError extends Error {
 }
 
 export const errorHandler = (
-  err: AppError,
+  err: AppError | Error,
   _req: Request,
   res: Response,
   _next: NextFunction
 ) => {
-  const statusCode = err.statusCode || 500;
-  const status = err.status || 'error';
+  // Handle AppError instances
+  if (err instanceof AppError) {
+    const statusCode = err.statusCode || 500;
+    const status = err.status || 'error';
 
-  res.status(statusCode).json({
-    status,
+    res.status(statusCode).json({
+      status,
+      message: err.message || 'Internal server error',
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    });
+    return;
+  }
+
+  // Handle generic errors
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    status: 'error',
     message: err.message || 'Internal server error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
