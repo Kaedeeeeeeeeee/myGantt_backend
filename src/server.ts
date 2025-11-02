@@ -5,7 +5,6 @@ import authRoutes from './routes/auth.js';
 import projectRoutes from './routes/projects.js';
 import taskRoutes from './routes/tasks.js';
 import invitationRoutes from './routes/invitations.js';
-import feedbackRoutes from './routes/feedback.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -26,7 +25,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/invitations', invitationRoutes);
-app.use('/api/feedback', feedbackRoutes);
 
 // Health check
 app.get('/health', (_req, res) => {
