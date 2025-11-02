@@ -15,11 +15,9 @@ const createTransporter = () => {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000, // 10 seconds
-      socketTimeout: 10000, // 10 seconds
-      // 对于 Gmail SMTP，需要明确设置
-      requireTLS: process.env.SMTP_HOST === 'smtp.gmail.com',
+      connectionTimeout: 30000, // 30 seconds
+      greetingTimeout: 30000, // 30 seconds
+      socketTimeout: 30000, // 30 seconds
       tls: {
         rejectUnauthorized: false, // 在生产环境中可能需要设置为 true
       },
@@ -78,10 +76,7 @@ export const sendFeedbackEmail = async (
       `,
     };
 
-    // 验证连接
-    await transporter.verify();
-    
-    // 发送邮件
+    // 发送邮件（不验证连接，避免超时）
     await transporter.sendMail(mailOptions);
   } catch (error: any) {
     console.error('Error sending feedback email:', error);
