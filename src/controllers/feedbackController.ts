@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { sendFeedbackEmail } from '../services/emailService.js';
 import { AppError } from '../middleware/errorHandler.js';
+import prisma from '../config/database.js';
 
 export const sendFeedback = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -24,10 +25,20 @@ export const sendFeedback = async (req: Request, res: Response, next: NextFuncti
       throw new AppError('Content must be less than 5000 characters', 400);
     }
 
+    // 从数据库获取用户信息（包括name）
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { email: true, name: true },
+    });
+
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+
     // 发送邮件
     await sendFeedbackEmail(
-      req.user.email,
-      req.user.name || null,
+      user.email,
+      user.name || null,
       subject.trim(),
       content.trim()
     );
