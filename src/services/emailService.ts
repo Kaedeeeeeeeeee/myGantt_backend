@@ -1,45 +1,12 @@
-import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// 创建邮件传输器
-const createTransporter = () => {
-  // 如果配置了SMTP，使用SMTP
-  if (process.env.SMTP_HOST) {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-      connectionTimeout: 30000, // 30 seconds
-      greetingTimeout: 30000, // 30 seconds
-      socketTimeout: 30000, // 30 seconds
-      tls: {
-        rejectUnauthorized: false, // 在生产环境中可能需要设置为 true
-      },
-    });
-  }
-
-  // 如果没有配置SMTP，尝试使用Gmail（需要应用密码）
-  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-    return nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000, // 10 seconds
-      socketTimeout: 10000, // 10 seconds
-    });
-  }
-
-  throw new Error('Email configuration not found. Please configure SMTP or Gmail credentials.');
-};
+// 初始化 SendGrid
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 /**
  * 发送反馈邮件
@@ -51,12 +18,21 @@ export const sendFeedbackEmail = async (
   content: string
 ): Promise<void> => {
   try {
-    const transporter = createTransporter();
-    const recipientEmail = process.env.FEEDBACK_EMAIL || 'f.shera.09@gmail.com';
+    // 检查 SendGrid API Key 是否配置
+    if (!process.env.SENDGRID_API_KEY) {
+      throw new Error('SENDGRID_API_KEY is not configured. Please set SENDGRID_API_KEY environment variable.');
+    }
 
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || `"${fromName || 'My Gantt User'}" <${fromEmail}>`,
+    const recipientEmail = process.env.FEEDBACK_EMAIL || 'f.shera.09@gmail.com';
+    const fromEmailAddress = process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_FROM || 'noreply@mygantt.com';
+    const fromNameDisplay = process.env.SENDGRID_FROM_NAME || 'My Gantt';
+
+    const msg = {
       to: recipientEmail,
+      from: {
+        email: fromEmailAddress,
+        name: fromNameDisplay,
+      },
       replyTo: fromEmail,
       subject: `[反馈] ${subject}`,
       text: `反馈内容:\n\n${content}\n\n---\n发送者:\n邮箱: ${fromEmail}\n${fromName ? `姓名: ${fromName}` : ''}`,
@@ -76,20 +52,18 @@ export const sendFeedbackEmail = async (
       `,
     };
 
-    // 发送邮件（不验证连接，避免超时）
-    await transporter.sendMail(mailOptions);
+    await sgMail.send(msg);
   } catch (error: any) {
     console.error('Error sending feedback email:', error);
     
     // 提供更详细的错误信息
-    if (error.code === 'ETIMEDOUT') {
-      throw new Error('Email service connection timeout. Please check your SMTP configuration.');
-    } else if (error.code === 'EAUTH') {
-      throw new Error('Email authentication failed. Please check your SMTP credentials.');
-    } else if (error.response) {
-      throw new Error(`Email service error: ${error.response}`);
+    if (error.response) {
+      const { body, statusCode } = error.response;
+      throw new Error(`SendGrid API error (${statusCode}): ${JSON.stringify(body)}`);
+    } else if (error.message) {
+      throw new Error(`Failed to send feedback email: ${error.message}`);
     } else {
-      throw new Error(`Failed to send feedback email: ${error.message || 'Unknown error'}`);
+      throw new Error('Failed to send feedback email: Unknown error');
     }
   }
 };

@@ -19,5 +19,11 @@ JWT_SECRET=your-jwt-secret-key-change-this-in-production
 JWT_REFRESH_SECRET=your-refresh-secret-key-change-this-in-production
 JWT_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
+
+# Email (SendGrid)
+SENDGRID_API_KEY=your-sendgrid-api-key
+SENDGRID_FROM_EMAIL=noreply@yourdomain.com
+SENDGRID_FROM_NAME=My Gantt
+FEEDBACK_EMAIL=f.shera.09@gmail.com
 ```
 
