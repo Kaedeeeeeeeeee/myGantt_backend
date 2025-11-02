@@ -1,12 +1,10 @@
-import sgMail from '@sendgrid/mail';
+import { Resend } from 'resend';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// 初始化 SendGrid
-if (process.env.SENDGRID_API_KEY) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-}
+// 初始化 Resend
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 /**
  * 发送反馈邮件
@@ -18,21 +16,18 @@ export const sendFeedbackEmail = async (
   content: string
 ): Promise<void> => {
   try {
-    // 检查 SendGrid API Key 是否配置
-    if (!process.env.SENDGRID_API_KEY) {
-      throw new Error('SENDGRID_API_KEY is not configured. Please set SENDGRID_API_KEY environment variable.');
+    // 检查 Resend API Key 是否配置
+    if (!resend || !process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY is not configured. Please set RESEND_API_KEY environment variable.');
     }
 
     const recipientEmail = process.env.FEEDBACK_EMAIL || 'f.shera.09@gmail.com';
-    const fromEmailAddress = process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_FROM || 'noreply@mygantt.com';
-    const fromNameDisplay = process.env.SENDGRID_FROM_NAME || 'My Gantt';
+    const fromEmailAddress = process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || 'onboarding@resend.dev';
+    const fromNameDisplay = process.env.RESEND_FROM_NAME || 'My Gantt';
 
-    const msg = {
+    const { data, error } = await resend.emails.send({
+      from: `${fromNameDisplay} <${fromEmailAddress}>`,
       to: recipientEmail,
-      from: {
-        email: fromEmailAddress,
-        name: fromNameDisplay,
-      },
       replyTo: fromEmail,
       subject: `[反馈] ${subject}`,
       text: `反馈内容:\n\n${content}\n\n---\n发送者:\n邮箱: ${fromEmail}\n${fromName ? `姓名: ${fromName}` : ''}`,
@@ -50,17 +45,20 @@ export const sendFeedbackEmail = async (
           </p>
         </div>
       `,
-    };
+    });
 
-    await sgMail.send(msg);
+    if (error) {
+      throw new Error(`Resend API error: ${JSON.stringify(error)}`);
+    }
+
+    if (!data) {
+      throw new Error('Failed to send email: No response from Resend');
+    }
   } catch (error: any) {
     console.error('Error sending feedback email:', error);
     
     // 提供更详细的错误信息
-    if (error.response) {
-      const { body, statusCode } = error.response;
-      throw new Error(`SendGrid API error (${statusCode}): ${JSON.stringify(body)}`);
-    } else if (error.message) {
+    if (error.message) {
       throw new Error(`Failed to send feedback email: ${error.message}`);
     } else {
       throw new Error('Failed to send feedback email: Unknown error');
