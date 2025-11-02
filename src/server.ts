@@ -14,8 +14,33 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+const allowedOrigins = process.env.FRONTEND_URL 
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+  : ['http://localhost:5174'];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5174',
+  origin: (origin, callback) => {
+    // 允许没有 origin 的请求（如移动应用或 Postman）
+    if (!origin) return callback(null, true);
+    
+    // 检查是否在允许列表中
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // 也支持带 www 和不带 www 的版本自动匹配
+      const normalizedOrigin = origin.replace(/^https?:\/\/(www\.)?/, '');
+      const isAllowed = allowedOrigins.some(allowed => {
+        const normalizedAllowed = allowed.replace(/^https?:\/\/(www\.)?/, '');
+        return normalizedOrigin === normalizedAllowed;
+      });
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
   credentials: true,
 }));
 app.use(express.json());
