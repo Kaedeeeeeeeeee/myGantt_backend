@@ -29,7 +29,7 @@ export const sendFeedbackEmail = async (
       from: `${fromNameDisplay} <${fromEmailAddress}>`,
       to: recipientEmail,
       replyTo: fromEmail,
-      subject: `[反馈] ${subject}`,
+      subject: `[用户反馈] ${subject}`,
       text: `反馈内容:\n\n${content}\n\n---\n发送者:\n邮箱: ${fromEmail}\n${fromName ? `姓名: ${fromName}` : ''}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
