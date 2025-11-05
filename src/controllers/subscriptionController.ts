@@ -16,17 +16,25 @@ export const getSubscriptionPlans = async (
   next: NextFunction
 ) => {
   try {
+    // 将 Infinity 转换为 "unlimited" 字符串，因为 JSON 无法序列化 Infinity
+    const formatLimits = (limits: { maxProjects: number | typeof Infinity; maxMembersPerProject: number | typeof Infinity }) => {
+      return {
+        maxProjects: limits.maxProjects === Infinity ? 'unlimited' : limits.maxProjects,
+        maxMembersPerProject: limits.maxMembersPerProject === Infinity ? 'unlimited' : limits.maxMembersPerProject,
+      };
+    };
+
     const plans = [
       {
         plan: SubscriptionPlan.FREE,
         name: 'Free',
-        limits: SUBSCRIPTION_LIMITS[SubscriptionPlan.FREE],
+        limits: formatLimits(SUBSCRIPTION_LIMITS[SubscriptionPlan.FREE]),
         price: null,
       },
       {
         plan: SubscriptionPlan.BASIC,
         name: 'Basic',
-        limits: SUBSCRIPTION_LIMITS[SubscriptionPlan.BASIC],
+        limits: formatLimits(SUBSCRIPTION_LIMITS[SubscriptionPlan.BASIC]),
         monthlyPrice: SUBSCRIPTION_PRICES[SubscriptionPlan.BASIC].monthly,
         yearlyPrice: SUBSCRIPTION_PRICES[SubscriptionPlan.BASIC].yearly,
         yearlyFirstTimePrice: SUBSCRIPTION_PRICES[SubscriptionPlan.BASIC].yearlyFirstTime,
@@ -34,7 +42,7 @@ export const getSubscriptionPlans = async (
       {
         plan: SubscriptionPlan.PRO,
         name: 'Pro',
-        limits: SUBSCRIPTION_LIMITS[SubscriptionPlan.PRO],
+        limits: formatLimits(SUBSCRIPTION_LIMITS[SubscriptionPlan.PRO]),
         monthlyPrice: SUBSCRIPTION_PRICES[SubscriptionPlan.PRO].monthly,
         yearlyPrice: SUBSCRIPTION_PRICES[SubscriptionPlan.PRO].yearly,
         yearlyFirstTimePrice: SUBSCRIPTION_PRICES[SubscriptionPlan.PRO].yearlyFirstTime,
@@ -78,6 +86,14 @@ export const getCurrentSubscription = async (
     const subscriptionEndDate = (user as any).subscriptionEndDate || null;
     const isFirstTimeSubscriber = (user as any).isFirstTimeSubscriber ?? true;
 
+    // 将 Infinity 转换为 "unlimited" 字符串
+    const formatLimits = (limits: { maxProjects: number | typeof Infinity; maxMembersPerProject: number | typeof Infinity }) => {
+      return {
+        maxProjects: limits.maxProjects === Infinity ? 'unlimited' : limits.maxProjects,
+        maxMembersPerProject: limits.maxMembersPerProject === Infinity ? 'unlimited' : limits.maxMembersPerProject,
+      };
+    };
+
     res.json({
       status: 'success',
       data: {
@@ -86,7 +102,7 @@ export const getCurrentSubscription = async (
         startDate: subscriptionStartDate,
         endDate: subscriptionEndDate,
         isFirstTimeSubscriber: isFirstTimeSubscriber,
-        limits: SUBSCRIPTION_LIMITS[subscriptionPlan as SubscriptionPlan],
+        limits: formatLimits(SUBSCRIPTION_LIMITS[subscriptionPlan as SubscriptionPlan]),
       },
     });
   } catch (error) {
