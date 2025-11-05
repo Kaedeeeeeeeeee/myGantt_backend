@@ -2,6 +2,7 @@ import prisma from '../config/database.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { ProjectRole } from '../middleware/projectPermission.js';
 import crypto from 'crypto';
+import { canProjectAddMember } from './subscriptionService.js';
 
 export { ProjectRole };
 
@@ -121,7 +122,21 @@ export const createInvitation = async (
     throw new AppError('Cannot invite users with OWNER role', 400);
   }
 
-  // 6. 创建邀请
+  // 6. 检查成员数量限制
+  const canAdd = await canProjectAddMember(projectId, project.userId);
+  
+  if (!canAdd) {
+    const owner = await prisma.user.findUnique({
+      where: { id: project.userId },
+      select: { subscriptionPlan: true },
+    });
+    throw new AppError(
+      `This project has reached the member limit for ${owner?.subscriptionPlan} plan. Please upgrade to add more members.`,
+      403
+    );
+  }
+
+  // 7. 创建邀请
   const token = generateInvitationToken();
   const expiresAt = getInvitationExpiry();
 
@@ -242,7 +257,30 @@ export const acceptInvitation = async (token: string, userId: string) => {
     };
   }
 
-  // 4. 使用事务创建成员并更新邀请状态
+  // 4. 检查成员数量限制（需要在接受邀请时检查）
+  const project = await prisma.project.findUnique({
+    where: { id: invitation.projectId },
+    select: { userId: true },
+  });
+
+  if (!project) {
+    throw new AppError('Project not found', 404);
+  }
+
+  const canAdd = await canProjectAddMember(invitation.projectId, project.userId);
+  
+  if (!canAdd) {
+    const owner = await prisma.user.findUnique({
+      where: { id: project.userId },
+      select: { subscriptionPlan: true },
+    });
+    throw new AppError(
+      `This project has reached the member limit for ${owner?.subscriptionPlan} plan. Please upgrade to add more members.`,
+      403
+    );
+  }
+
+  // 5. 使用事务创建成员并更新邀请状态
   const result = await prisma.$transaction(async (tx) => {
     // 创建项目成员
     await tx.projectMember.create({

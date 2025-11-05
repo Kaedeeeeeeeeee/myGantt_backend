@@ -25,6 +25,18 @@ enum InvitationStatus {
   CANCELLED
 }
 
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -33,6 +45,14 @@ model User {
   avatarUrl String?  @map("avatar_url")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  subscriptionPlan      SubscriptionPlan   @default(FREE) @map("subscription_plan")
+  subscriptionStatus    SubscriptionStatus @default(ACTIVE) @map("subscription_status")
+  subscriptionStartDate DateTime?          @map("subscription_start_date")
+  subscriptionEndDate   DateTime?          @map("subscription_end_date")
+  stripeCustomerId      String?            @unique @map("stripe_customer_id")
+  stripeSubscriptionId  String?            @unique @map("stripe_subscription_id")
+  isFirstTimeSubscriber Boolean            @default(true) @map("is_first_time_subscriber")
 
   projects        Project[]
   projectMembers  ProjectMember[]

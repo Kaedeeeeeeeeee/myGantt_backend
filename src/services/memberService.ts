@@ -1,6 +1,7 @@
 import prisma from '../config/database.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { ProjectRole } from '../middleware/projectPermission.js';
+import { isUserAccessibleMember } from './subscriptionService.js';
 
 export interface ProjectMemberResponse {
   id: string;
@@ -37,10 +38,25 @@ export const getProjectMembers = async (
         { members: { some: { userId } } },
       ],
     },
+    select: { userId: true },
   });
 
   if (!project) {
     throw new AppError('Project not found or insufficient permissions', 404);
+  }
+
+  // 检查用户是否可以访问此项目（考虑降级）
+  const canAccess = await isUserAccessibleMember(
+    projectId,
+    userId,
+    project.userId
+  );
+
+  if (!canAccess) {
+    throw new AppError(
+      'Access denied. The project owner\'s subscription has changed, and you no longer have access to this project.',
+      403
+    );
   }
 
   const members = await prisma.projectMember.findMany({

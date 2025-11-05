@@ -1,6 +1,7 @@
 import prisma from '../config/database.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { ProjectRole } from '../middleware/projectPermission.js';
+import { canUserCreateProject, getUserAccessibleProjects } from './subscriptionService.js';
 
 export interface CreateProjectData {
   name: string;
@@ -11,9 +12,13 @@ export interface UpdateProjectData {
 }
 
 export const getProjectsByUserId = async (userId: string) => {
-  // 查询用户拥有的项目 + 作为成员的项目
+  // 获取用户可访问的项目ID列表（考虑降级限制）
+  const accessibleProjectIds = await getUserAccessibleProjects(userId);
+  
+  // 查询用户拥有的项目 + 作为成员的项目，但只返回可访问的项目
   const projects = await prisma.project.findMany({
     where: {
+      id: { in: accessibleProjectIds },
       OR: [
         { userId },
         { members: { some: { userId } } },
@@ -68,6 +73,19 @@ export const getProjectById = async (projectId: string, userId: string) => {
 };
 
 export const createProject = async (userId: string, data: CreateProjectData) => {
+  // 检查订阅限制
+  const canCreate = await canUserCreateProject(userId);
+  if (!canCreate) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { subscriptionPlan: true },
+    });
+    throw new AppError(
+      `Your ${user?.subscriptionPlan} plan has reached the project limit. Please upgrade to create more projects.`,
+      403
+    );
+  }
+
   // 使用事务创建项目并自动创建OWNER成员记录
   return await prisma.$transaction(async (tx) => {
     // 创建项目

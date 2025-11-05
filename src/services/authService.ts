@@ -67,6 +67,8 @@ export const findOrCreateUser = async (googleUser: GoogleUserInfo) => {
         email: user.email,
         name: user.name,
         avatarUrl: user.avatarUrl,
+        subscriptionPlan: user.subscriptionPlan,
+        subscriptionStatus: user.subscriptionStatus,
       },
       accessToken,
       refreshToken,
@@ -85,6 +87,8 @@ export const getUserById = async (userId: string) => {
       name: true,
       avatarUrl: true,
       createdAt: true,
+      subscriptionPlan: true,
+      subscriptionStatus: true,
     },
   });
 
