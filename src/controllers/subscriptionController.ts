@@ -4,7 +4,6 @@ import {
   SUBSCRIPTION_LIMITS,
   SUBSCRIPTION_PRICES,
   SubscriptionPlan,
-  updateUserSubscription,
 } from '../services/subscriptionService.js';
 import prisma from '../config/database.js';
 
@@ -12,7 +11,7 @@ import prisma from '../config/database.js';
  * 获取所有订阅计划信息
  */
 export const getSubscriptionPlans = async (
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -159,7 +158,7 @@ export const createCheckoutSession = async (
  * TODO: 集成 Stripe Webhook
  */
 export const handleStripeWebhook = async (
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction
 ) => {
