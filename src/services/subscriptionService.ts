@@ -44,8 +44,45 @@ export const SUBSCRIPTION_PRICES = {
 } as const;
 
 /**
- * 获取用户的项目总数（包括作为成员参与的项目）
+ * 安全获取用户的订阅计划，如果字段不存在则返回 FREE
  */
+const getUserSubscriptionPlan = async (userId: string): Promise<SubscriptionPlan> => {
+  try {
+    // 先查询用户是否存在
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+
+    // 尝试访问 subscriptionPlan 字段
+    // 如果字段不存在，Prisma 会返回 undefined 或 null
+    const plan = (user as any).subscriptionPlan;
+    
+    // 如果字段不存在或为 null，返回 FREE
+    if (!plan || !Object.values(SubscriptionPlan).includes(plan as SubscriptionPlan)) {
+      return SubscriptionPlan.FREE;
+    }
+    
+    return plan as SubscriptionPlan;
+  } catch (error: any) {
+    // 如果是 Prisma 查询错误（字段不存在），返回默认值 FREE
+    // Prisma 错误通常是 PrismaClientKnownRequestError
+    if (
+      error.code === 'P2009' || 
+      error.code === 'P2011' ||
+      error.message?.includes('Unknown column') || 
+      error.message?.includes('does not exist') ||
+      error.message?.includes('column') && error.message?.includes('not found')
+    ) {
+      return SubscriptionPlan.FREE;
+    }
+    // 其他错误继续抛出
+    throw error;
+  }
+};
 export const getUserProjectCount = async (userId: string): Promise<number> => {
   const count = await prisma.project.count({
     where: {
@@ -73,16 +110,8 @@ export const getProjectMemberCount = async (projectId: string): Promise<number> 
  * 检查用户是否可以创建新项目
  */
 export const canUserCreateProject = async (userId: string): Promise<boolean> => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { subscriptionPlan: true },
-  });
-
-  if (!user) {
-    throw new AppError('User not found', 404);
-  }
-
-  const limit = SUBSCRIPTION_LIMITS[user.subscriptionPlan as SubscriptionPlan];
+  const subscriptionPlan = await getUserSubscriptionPlan(userId);
+  const limit = SUBSCRIPTION_LIMITS[subscriptionPlan];
   
   if (limit.maxProjects === Infinity) {
     return true;
@@ -102,14 +131,14 @@ export const canProjectAddMember = async (
 ): Promise<boolean> => {
   const owner = await prisma.user.findUnique({
     where: { id: ownerUserId },
-    select: { subscriptionPlan: true },
   });
 
   if (!owner) {
     throw new AppError('Project owner not found', 404);
   }
 
-  const limit = SUBSCRIPTION_LIMITS[owner.subscriptionPlan as SubscriptionPlan];
+  const subscriptionPlan = await getUserSubscriptionPlan(ownerUserId);
+  const limit = SUBSCRIPTION_LIMITS[subscriptionPlan];
   
   if (limit.maxMembersPerProject === Infinity) {
     return true;
@@ -125,14 +154,14 @@ export const canProjectAddMember = async (
 export const getUserAccessibleProjects = async (userId: string): Promise<string[]> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { subscriptionPlan: true },
   });
 
   if (!user) {
     throw new AppError('User not found', 404);
   }
 
-  const limit = SUBSCRIPTION_LIMITS[user.subscriptionPlan as SubscriptionPlan];
+  const subscriptionPlan = await getUserSubscriptionPlan(userId);
+  const limit = SUBSCRIPTION_LIMITS[subscriptionPlan];
 
   // 如果是无限计划，返回所有项目
   if (limit.maxProjects === Infinity) {
@@ -185,14 +214,14 @@ export const getProjectAccessibleMembers = async (
 ): Promise<string[]> => {
   const owner = await prisma.user.findUnique({
     where: { id: ownerUserId },
-    select: { subscriptionPlan: true },
   });
 
   if (!owner) {
     throw new AppError('Project owner not found', 404);
   }
 
-  const limit = SUBSCRIPTION_LIMITS[owner.subscriptionPlan as SubscriptionPlan];
+  const subscriptionPlan = await getUserSubscriptionPlan(ownerUserId);
+  const limit = SUBSCRIPTION_LIMITS[subscriptionPlan];
 
   // 如果是无限计划，返回所有成员
   if (limit.maxMembersPerProject === Infinity) {
