@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "npx tsc",
     "start": "node dist/server.js",
-    "start:prod": "npx prisma migrate deploy || echo 'Migration failed, continuing anyway...' && node dist/server.js",
+    "start:prod": "sh start.sh",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
