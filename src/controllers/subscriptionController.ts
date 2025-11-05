@@ -65,28 +65,28 @@ export const getCurrentSubscription = async (
 
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
-      select: {
-        subscriptionPlan: true,
-        subscriptionStatus: true,
-        subscriptionStartDate: true,
-        subscriptionEndDate: true,
-        isFirstTimeSubscriber: true,
-      },
     });
 
     if (!user) {
       throw new AppError('User not found', 404);
     }
 
+    // 安全获取订阅字段，如果不存在则使用默认值
+    const subscriptionPlan = (user as any).subscriptionPlan || SubscriptionPlan.FREE;
+    const subscriptionStatus = (user as any).subscriptionStatus || 'ACTIVE';
+    const subscriptionStartDate = (user as any).subscriptionStartDate || null;
+    const subscriptionEndDate = (user as any).subscriptionEndDate || null;
+    const isFirstTimeSubscriber = (user as any).isFirstTimeSubscriber ?? true;
+
     res.json({
       status: 'success',
       data: {
-        plan: user.subscriptionPlan,
-        status: user.subscriptionStatus,
-        startDate: user.subscriptionStartDate,
-        endDate: user.subscriptionEndDate,
-        isFirstTimeSubscriber: user.isFirstTimeSubscriber,
-        limits: SUBSCRIPTION_LIMITS[user.subscriptionPlan as SubscriptionPlan],
+        plan: subscriptionPlan,
+        status: subscriptionStatus,
+        startDate: subscriptionStartDate,
+        endDate: subscriptionEndDate,
+        isFirstTimeSubscriber: isFirstTimeSubscriber,
+        limits: SUBSCRIPTION_LIMITS[subscriptionPlan as SubscriptionPlan],
       },
     });
   } catch (error) {
