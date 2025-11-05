@@ -15,6 +15,11 @@ export const getProjectsByUserId = async (userId: string) => {
   // 获取用户可访问的项目ID列表（考虑降级限制）
   const accessibleProjectIds = await getUserAccessibleProjects(userId);
   
+  // 如果可访问项目列表为空，返回空数组
+  if (accessibleProjectIds.length === 0) {
+    return [];
+  }
+  
   // 查询用户拥有的项目 + 作为成员的项目，但只返回可访问的项目
   const projects = await prisma.project.findMany({
     where: {
