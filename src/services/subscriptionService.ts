@@ -106,13 +106,20 @@ export const getUserProjectCount = async (userId: string): Promise<number> => {
 
 /**
  * 获取项目的成员总数（包括创建者）
+ * 注意：创建者可能已经在 ProjectMember 表中（如果项目是通过新系统创建的）
  */
 export const getProjectMemberCount = async (projectId: string): Promise<number> => {
-  const count = await prisma.projectMember.count({
-    where: { projectId },
+  // 获取项目信息，包括创建者ID
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { userId: true },
   });
-  
-  // 添加调试日志，列出所有成员
+
+  if (!project) {
+    throw new AppError('Project not found', 404);
+  }
+
+  // 统计 ProjectMember 表中的所有成员
   const members = await prisma.projectMember.findMany({
     where: { projectId },
     include: {
@@ -125,21 +132,29 @@ export const getProjectMemberCount = async (projectId: string): Promise<number> 
       },
     },
   });
+
+  // 检查创建者是否已经在 ProjectMember 表中
+  const ownerInMembers = members.some(m => m.userId === project.userId);
+  
+  // 如果创建者已经在表中，直接返回成员数量
+  // 如果创建者不在表中，需要 +1
+  const totalCount = ownerInMembers ? members.length : members.length + 1;
   
   console.log('getProjectMemberCount:', {
     projectId,
-    projectMemberCount: count,
-    totalMemberCount: count + 1,
+    projectMemberCount: members.length,
+    ownerInMembers,
+    totalMemberCount: totalCount,
     members: members.map(m => ({
       userId: m.userId,
       email: m.user.email,
       name: m.user.name,
       role: m.role,
+      isOwner: m.userId === project.userId,
     })),
   });
   
-  // 创建者也算一个成员，所以返回 count + 1
-  return count + 1;
+  return totalCount;
 };
 
 /**
