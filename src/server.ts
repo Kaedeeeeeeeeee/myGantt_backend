@@ -8,6 +8,7 @@ import invitationRoutes from './routes/invitations.js';
 import feedbackRoutes from './routes/feedback.js';
 import subscriptionRoutes from './routes/subscription.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import prisma from './config/database.js';
 
 dotenv.config();
 
@@ -63,7 +64,48 @@ app.get('/health', (_req, res) => {
 // Error handling
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+});
+
+// 优雅关闭处理
+const gracefulShutdown = async (signal: string) => {
+  console.log(`Received ${signal}, starting graceful shutdown...`);
+  
+  server.close(() => {
+    console.log('HTTP server closed');
+    
+    // 关闭 Prisma 连接
+    prisma.$disconnect()
+      .then(() => {
+        console.log('Database connection closed');
+        process.exit(0);
+      })
+      .catch((err) => {
+        console.error('Error closing database connection:', err);
+        process.exit(1);
+      });
+  });
+  
+  // 如果 10 秒后还没有关闭，强制退出
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+};
+
+// 监听终止信号
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+// 处理未捕获的异常
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  gracefulShutdown('uncaughtException');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  gracefulShutdown('unhandledRejection');
 });
 

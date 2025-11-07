@@ -2,7 +2,10 @@ import prisma from '../config/database.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { ProjectRole } from '../middleware/projectPermission.js';
 import crypto from 'crypto';
-import { canProjectAddMember } from './subscriptionService.js';
+import { 
+  canProjectAddMember, 
+  getProjectMemberCount
+} from './subscriptionService.js';
 
 export { ProjectRole };
 
@@ -126,12 +129,21 @@ export const createInvitation = async (
   const canAdd = await canProjectAddMember(projectId, project.userId);
   
   if (!canAdd) {
+    // 添加调试信息
+    const memberCount = await getProjectMemberCount(projectId);
     const owner = await prisma.user.findUnique({
       where: { id: project.userId },
       select: { subscriptionPlan: true },
     });
+    
+    console.log('Member limit check failed:', {
+      projectId,
+      memberCount,
+      subscriptionPlan: owner?.subscriptionPlan,
+    });
+    
     throw new AppError(
-      `This project has reached the member limit for ${owner?.subscriptionPlan} plan. Please upgrade to add more members.`,
+      `This project has reached the member limit for ${owner?.subscriptionPlan || 'FREE'} plan. Please upgrade to add more members.`,
       403
     );
   }
