@@ -415,7 +415,7 @@ export const getProjectInvitations = async (projectId: string, userId: string) =
   const invitations = await prisma.projectInvitation.findMany({
     where: {
       projectId,
-      status: { in: [InvitationStatus.PENDING, InvitationStatus.ACCEPTED] },
+      status: InvitationStatus.PENDING,
     },
     include: {
       inviter: {

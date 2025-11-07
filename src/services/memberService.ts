@@ -2,6 +2,7 @@ import prisma from '../config/database.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { ProjectRole } from '../middleware/projectPermission.js';
 import { isUserAccessibleMember } from './subscriptionService.js';
+import { InvitationStatus } from './invitationService.js';
 
 export interface ProjectMemberResponse {
   id: string;
@@ -250,6 +251,13 @@ export const removeMember = async (
         userId: targetUserId,
       },
     },
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+    },
   });
 
   if (!existingMember) {
@@ -278,14 +286,29 @@ export const removeMember = async (
     );
   }
 
-  // 移除成员
-  await prisma.projectMember.delete({
-    where: {
-      projectId_userId: {
-        projectId,
-        userId: targetUserId,
+  // 使用事务移除成员并取消相关的待处理邀请
+  await prisma.$transaction(async (tx) => {
+    // 移除成员
+    await tx.projectMember.delete({
+      where: {
+        projectId_userId: {
+          projectId,
+          userId: targetUserId,
+        },
       },
-    },
+    });
+
+    // 取消该用户邮箱相关的待处理邀请
+    await tx.projectInvitation.updateMany({
+      where: {
+        projectId,
+        inviteeEmail: existingMember.user.email.toLowerCase(),
+        status: InvitationStatus.PENDING,
+      },
+      data: {
+        status: InvitationStatus.CANCELLED,
+      },
+    });
   });
 };
 
