@@ -112,11 +112,30 @@ export const getProjectMemberCount = async (projectId: string): Promise<number> 
     where: { projectId },
   });
   
-  // 添加调试日志
+  // 添加调试日志，列出所有成员
+  const members = await prisma.projectMember.findMany({
+    where: { projectId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
+      },
+    },
+  });
+  
   console.log('getProjectMemberCount:', {
     projectId,
     projectMemberCount: count,
     totalMemberCount: count + 1,
+    members: members.map(m => ({
+      userId: m.userId,
+      email: m.user.email,
+      name: m.user.name,
+      role: m.role,
+    })),
   });
   
   // 创建者也算一个成员，所以返回 count + 1
