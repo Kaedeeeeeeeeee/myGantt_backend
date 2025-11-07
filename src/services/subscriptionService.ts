@@ -145,6 +145,8 @@ export const canProjectAddMember = async (
   }
 
   const memberCount = await getProjectMemberCount(projectId);
+  // 检查是否还有空间添加新成员（memberCount 已经包括创建者）
+  // 例如：FREE 计划限制是 2，如果 memberCount = 1（只有创建者），则可以添加 1 个成员
   return memberCount < limit.maxMembersPerProject;
 };
 
