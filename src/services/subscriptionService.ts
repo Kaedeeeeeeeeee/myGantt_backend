@@ -61,8 +61,16 @@ const getUserSubscriptionPlan = async (userId: string): Promise<SubscriptionPlan
     // 如果字段不存在，Prisma 会返回 undefined 或 null
     const plan = (user as any).subscriptionPlan;
     
+    // 添加调试日志
+    console.log('getUserSubscriptionPlan:', {
+      userId,
+      plan,
+      planType: typeof plan,
+    });
+    
     // 如果字段不存在或为 null，返回 FREE
     if (!plan || !Object.values(SubscriptionPlan).includes(plan as SubscriptionPlan)) {
+      console.log('Returning FREE plan (default)');
       return SubscriptionPlan.FREE;
     }
     
@@ -77,6 +85,7 @@ const getUserSubscriptionPlan = async (userId: string): Promise<SubscriptionPlan
       error.message?.includes('does not exist') ||
       error.message?.includes('column') && error.message?.includes('not found')
     ) {
+      console.log('Prisma error, returning FREE plan (default)');
       return SubscriptionPlan.FREE;
     }
     // 其他错误继续抛出
@@ -102,6 +111,14 @@ export const getProjectMemberCount = async (projectId: string): Promise<number> 
   const count = await prisma.projectMember.count({
     where: { projectId },
   });
+  
+  // 添加调试日志
+  console.log('getProjectMemberCount:', {
+    projectId,
+    projectMemberCount: count,
+    totalMemberCount: count + 1,
+  });
+  
   // 创建者也算一个成员，所以返回 count + 1
   return count + 1;
 };
@@ -145,6 +162,17 @@ export const canProjectAddMember = async (
   }
 
   const memberCount = await getProjectMemberCount(projectId);
+  
+  // 添加详细的调试日志
+  console.log('canProjectAddMember check:', {
+    projectId,
+    ownerUserId,
+    subscriptionPlan,
+    maxMembersPerProject: limit.maxMembersPerProject,
+    memberCount,
+    canAdd: memberCount < limit.maxMembersPerProject,
+  });
+  
   // 检查是否还有空间添加新成员（memberCount 已经包括创建者）
   // 例如：FREE 计划限制是 2，如果 memberCount = 1（只有创建者），则可以添加 1 个成员
   return memberCount < limit.maxMembersPerProject;
